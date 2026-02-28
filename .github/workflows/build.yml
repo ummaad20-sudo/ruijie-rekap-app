@@ -10,7 +10,8 @@ jobs:
     runs-on: ubuntu-22.04
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Install system dependencies
       run: |
@@ -36,15 +37,14 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        pip3 install --user --upgrade pip
+        python3 -m pip install --upgrade pip
         pip3 install --user buildozer cython
 
     - name: Build with Buildozer
       run: |
         export PATH=$PATH:~/.local/bin
-        # Hapus 'yes |' karena bisa menyebabkan broken pipe
-        buildozer -v android debug || true
-
+        buildozer -v android debug
+        
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
