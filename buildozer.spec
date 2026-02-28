@@ -30,7 +30,3 @@ permissions = READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE
 android.gradle_dependencies = androidx.core:core:1.7.0
 android.arch = arm64-v8a
 android.accept_sdk_license = True
-android.build_tools_version = 30.0.0
-android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk
-android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r23b
-android.auto_sdk = False
