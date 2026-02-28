@@ -22,7 +22,7 @@ warn_on_root = 1
 [requirements]
 android.api = 30
 android.minapi = 21
-android.ndk = 23b
+android.ndk = 25b
 android.sdk = 30
 
 [android]
@@ -32,9 +32,6 @@ android.arch = arm64-v8a
 android.accept_sdk_license = True
 android.build_tools_version = 30.0.0
 
-# MATIKAN DOWNLOAD OTOMATIS SDK
-android.ndk_path = /home/runner/android-sdk/ndk/23.1.7779620
-android.sdk_path = /home/runner/android-sdk
-
-# Paksa pake versi tertentu
-p4a.branch = master
+# Path ke Android SDK
+android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk
+android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r25b
