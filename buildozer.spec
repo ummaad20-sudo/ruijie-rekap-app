@@ -32,6 +32,9 @@ android.arch = arm64-v8a
 android.accept_sdk_license = True
 android.build_tools_version = 30.0.0
 
-# Path ke Android SDK
-android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk
-android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r25b
+# MATIKAN DOWNLOAD OTOMATIS SDK
+android.ndk_path = /home/runner/android-sdk/ndk/23.1.7779620
+android.sdk_path = /home/runner/android-sdk
+
+# Paksa pake versi tertentu
+p4a.branch = master
