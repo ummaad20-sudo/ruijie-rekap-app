@@ -7,16 +7,11 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04  # PAKAI UBUNTU 20.04, BUKAN 22.04
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.8'
 
     - name: Install system dependencies
       run: |
@@ -25,7 +20,7 @@ jobs:
           git \
           zip \
           unzip \
-          openjdk-11-jdk \
+          openjdk-8-jdk \  # PAKAI JAVA 8, BUKAN 11 ATAU 17
           python3-pip \
           python3-dev \
           autoconf \
@@ -37,69 +32,22 @@ jobs:
           cmake \
           libffi-dev \
           libssl-dev \
-          wget \
-          expect
-        # HAPUS libtinfo5 dari daftar (sudah include di ncurses)
+          wget
 
     - name: Install Python dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install --user buildozer cython
-
-    - name: Setup Android SDK (VERSI LAMA YANG STABIL)
-      run: |
-        # Buat folder Android
-        mkdir -p ~/.android
-        touch ~/.android/repositories.cfg
-        
-        # Install SDK tools versi lama
-        echo "Installing Android SDK (stable version)..."
-        cd ~
-        wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
-        unzip -q sdk-tools-linux-4333796.zip -d android-sdk
-        rm sdk-tools-linux-4333796.zip
-        
-        # Set PATH
-        export PATH=$PATH:~/android-sdk/tools/bin:~/android-sdk/platform-tools
-        
-        # Accept semua lisensi
-        echo "Accepting all Android SDK licenses..."
-        yes | ~/android-sdk/tools/bin/sdkmanager --licenses || true
-        
-        # Install komponen yang diperlukan
-        ~/android-sdk/tools/bin/sdkmanager "platform-tools" || true
-        ~/android-sdk/tools/bin/sdkmanager "platforms;android-30" || true
-        ~/android-sdk/tools/bin/sdkmanager "build-tools;30.0.0" || true
-        ~/android-sdk/tools/bin/sdkmanager "ndk;23.1.7779620" || true
-        
-        # Buat folder untuk buildozer
-        mkdir -p /home/runner/.buildozer/android/platform
-        
-        # Copy SDK ke folder buildozer
-        cp -r ~/android-sdk /home/runner/.buildozer/android/platform/
-        
-        # Buat symlink untuk ndk
-        ln -sf /home/runner/.buildozer/android/platform/android-sdk/ndk/23.1.7779620 /home/runner/.buildozer/android/platform/android-ndk-r23b
-        
-        # Set environment variables
-        echo "ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-        echo "ANDROID_SDK_ROOT=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-        echo "PATH=$PATH:~/android-sdk/tools/bin:~/android-sdk/platform-tools" >> $GITHUB_ENV
+        python3 -m pip install --upgrade pip
+        pip3 install --user buildozer cython
 
     - name: Build with Buildozer
       run: |
-        export PATH=$PATH:~/.local/bin:~/android-sdk/tools/bin:~/android-sdk/platform-tools
-        export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-        export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk
-        export ANDROID_SDK_ROOT=/home/runner/.buildozer/android/platform/android-sdk
-        
+        export PATH=$PATH:~/.local/bin
+        export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
         buildozer -v android debug
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: RuijieRekap-APK
-        path: |
-          bin/*.apk
-          **/*.apk
+        path: bin/*.apk
       if: always()
