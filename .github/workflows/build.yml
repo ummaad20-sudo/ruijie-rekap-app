@@ -39,23 +39,21 @@ jobs:
           libffi-dev \
           libssl-dev \
           wget \
-          expect \
-          tree \
-          findutils
+          expect
 
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
         pip install --user buildozer cython
 
-    - name: Accept Android SDK Licenses (SOLUSI UTAMA)
+    - name: Setup Android SDK with stable build-tools
       run: |
         # Buat folder Android
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
         
-        # Install sdkmanager terlebih dahulu
-        echo "Installing Android SDK command line tools..."
+        # Install Android SDK command line tools
+        echo "📦 Installing Android SDK command line tools..."
         mkdir -p ~/android-sdk/cmdline-tools
         cd ~/android-sdk
         wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
@@ -63,21 +61,39 @@ jobs:
         mv cmdline-tools latest
         mkdir -p cmdline-tools
         mv latest cmdline-tools/
+        
+        # Set PATH
         export PATH=$PATH:~/android-sdk/cmdline-tools/latest/bin
         
-        # Auto-accept semua lisensi
-        echo "Accepting all Android SDK licenses..."
+        # Accept semua lisensi
+        echo "✅ Accepting all Android SDK licenses..."
         yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
+        
+        # Install build-tools versi STABIL (bukan rc)
+        echo "🔧 Installing stable build-tools 30.0.0..."
+        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.0" || true
+        
+        # Install platform tools
+        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" || true
+        
+        # Install platform android-30
+        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-30" || true
         
         # Set environment variables
         echo "ANDROID_HOME=~/android-sdk" >> $GITHUB_ENV
         echo "PATH=$PATH:~/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_ENV
+        
+        echo "✅ Android SDK setup completed!"
 
-    - name: Build with Buildozer
+    - name: Build with Buildozer (paksa pake build-tools 30.0.0)
       run: |
         export PATH=$PATH:~/.local/bin:~/android-sdk/cmdline-tools/latest/bin
         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         export ANDROID_HOME=~/android-sdk
+        
+        # Paksa buildozer pake build-tools 30.0.0 dengan membuat symlink
+        mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools
+        ln -sf ~/android-sdk/build-tools/30.0.0 ~/.buildozer/android/platform/android-sdk/build-tools/30.0.0
         
         # Build APK
         buildozer -v android debug
@@ -85,24 +101,22 @@ jobs:
     - name: Find and Upload APK
       if: always()
       run: |
-        echo "🔍 Mencari file APK yang dihasilkan..."
+        echo "🔍 Mencari file APK..."
         mkdir -p apk-artifacts
         
         # Cari semua file .apk
         find ~ -name "*.apk" -type f 2>/dev/null | while read apk; do
           echo "✅ APK ditemukan: $apk"
-          ls -la "$apk"
           cp "$apk" apk-artifacts/ 2>/dev/null || true
         done
         
         find $GITHUB_WORKSPACE -name "*.apk" -type f 2>/dev/null | while read apk; do
           echo "✅ APK ditemukan di workspace: $apk"
-          ls -la "$apk"
           cp "$apk" apk-artifacts/ 2>/dev/null || true
         done
         
-        echo "📋 Daftar APK yang siap diupload:"
-        ls -la apk-artifacts/ || echo "Tidak ada APK ditemukan"
+        echo "📋 Daftar APK:"
+        ls -la apk-artifacts/ || echo "Tidak ada APK"
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
