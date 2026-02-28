@@ -43,31 +43,19 @@ jobs:
 
     - name: Accept Android SDK Licenses
       run: |
-        # Buat folder Android
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
-        
-        # Set PATH untuk sdkmanager
-        export PATH=$PATH:$HOME/.buildozer/android/platform/android-sdk/tools/bin
-        
-        # Tunggu sampai SDK terdownload oleh buildozer
-        echo "Waiting for SDK to be downloaded..."
-        
-        # Auto-accept semua lisensi pake expect script
-        expect -c '
-          set timeout 300
-          spawn buildozer android update
-          expect {
-            "Accept? (y/N)" { send "y\r"; exp_continue }
-            eof
-          }
-        ' || true
+        # Auto-accept semua lisensi
+        yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses > /dev/null 2>&1 || true
 
     - name: Build with Buildozer
       run: |
         export PATH=$PATH:~/.local/bin
-        # Build dengan auto-accept
-        yes | buildozer -v android debug || true
+        # Retry mechanism jika gagal download
+        for i in {1..3}; do
+          echo "Attempt $i of 3"
+          buildozer -v android debug && break || sleep 30
+        done
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
