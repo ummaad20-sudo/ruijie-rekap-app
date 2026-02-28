@@ -50,7 +50,8 @@ class RekapApp(App):
 
         self.result_label.bind(texture_size=self.result_label.setter('size'))
         self.result_label.bind(
-            width=lambda s, w: s.setter('text_size')(s, (w - 20, None))
+            width=lambda s, w: s.setter('text_size')(
+                s, (w - 20, None))
         )
 
         scroll = ScrollView(size_hint=(1, 0.70))
