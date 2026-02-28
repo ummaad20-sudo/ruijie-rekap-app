@@ -16,7 +16,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.10'
+        python-version: '3.8'  # Turunkan ke 3.8 untuk kompatibilitas
 
     - name: Install system dependencies
       run: |
@@ -25,7 +25,7 @@ jobs:
           git \
           zip \
           unzip \
-          openjdk-17-jdk \
+          openjdk-11-jdk \  # Turunkan ke Java 11
           python3-pip \
           python3-dev \
           autoconf \
@@ -46,70 +46,63 @@ jobs:
         python -m pip install --upgrade pip
         pip install --user buildozer cython
 
-    - name: Setup Android SDK
+    - name: Setup Android SDK (VERSI LAMA YANG STABIL)
       run: |
         # Buat folder Android
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
         
-        # Install Android SDK command line tools
-        echo "📦 Installing Android SDK command line tools..."
-        mkdir -p ~/android-sdk/cmdline-tools
-        cd ~/android-sdk
-        wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-        unzip -q commandlinetools-linux-9477386_latest.zip
-        mv cmdline-tools latest
-        mkdir -p cmdline-tools
-        mv latest cmdline-tools/
+        # 🚨 PAKAI SDK TOOLS VERSI LAMA (26.1.1) YANG TERBUKTI STABIL
+        echo "📦 Installing Android SDK (stable version)..."
+        cd ~
+        wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
+        unzip -q sdk-tools-linux-4333796.zip -d android-sdk
+        rm sdk-tools-linux-4333796.zip
         
         # Set PATH
-        export PATH=$PATH:~/android-sdk/cmdline-tools/latest/bin
+        export PATH=$PATH:~/android-sdk/tools/bin:~/android-sdk/platform-tools
         
         # Accept semua lisensi
         echo "✅ Accepting all Android SDK licenses..."
-        yes | ~/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses || true
-        
-        # Install build-tools versi STABIL
-        echo "🔧 Installing build-tools..."
-        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.0" || true
-        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "build-tools;30.0.3" || true
+        yes | ~/android-sdk/tools/bin/sdkmanager --licenses || true
         
         # Install platform tools
-        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" || true
+        ~/android-sdk/tools/bin/sdkmanager "platform-tools" "platforms;android-30" || true
         
-        # Install platforms
-        ~/android-sdk/cmdline-tools/latest/bin/sdkmanager "platforms;android-30" || true
+        # Install build-tools versi stabil
+        ~/android-sdk/tools/bin/sdkmanager "build-tools;30.0.0" "build-tools;30.0.3" || true
         
-        # 🚨 PASTIKAN FOLDER YANG DICARI BUILDOZER ADA
-        echo "📂 Membuat folder untuk buildozer..."
-        mkdir -p /home/runner/.buildozer/android/platform/android-sdk
+        # Install NDK
+        ~/android-sdk/tools/bin/sdkmanager "ndk;23.1.7779620" || true
         
-        # COPY SDK ke folder buildozer (bukan symlink)
-        echo "📋 Copy SDK ke folder buildozer..."
-        cp -r ~/android-sdk/* /home/runner/.buildozer/android/platform/android-sdk/ || true
+        # 🚨 BUAT FOLDER UNTUK BUILDOZER
+        mkdir -p /home/runner/.buildozer/android/platform
         
-        # Buat struktur folder tools/bin yang diperlukan
-        mkdir -p /home/runner/.buildozer/android/platform/android-sdk/tools/bin
-        cp ~/android-sdk/cmdline-tools/latest/bin/sdkmanager /home/runner/.buildozer/android/platform/android-sdk/tools/bin/ || true
-        cp ~/android-sdk/cmdline-tools/latest/bin/avdmanager /home/runner/.buildozer/android/platform/android-sdk/tools/bin/ || true
+        # COPY SDK ke folder buildozer
+        cp -r ~/android-sdk /home/runner/.buildozer/android/platform/
+        
+        # Buat symlink untuk ndk
+        ln -sf /home/runner/.buildozer/android/platform/android-sdk/ndk/23.1.7779620 /home/runner/.buildozer/android/platform/android-ndk-r23b
         
         # Set environment variables
         echo "ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
         echo "ANDROID_SDK_ROOT=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-        echo "PATH=$PATH:~/android-sdk/cmdline-tools/latest/bin:/home/runner/.buildozer/android/platform/android-sdk/tools/bin" >> $GITHUB_ENV
+        echo "PATH=$PATH:~/android-sdk/tools/bin:~/android-sdk/platform-tools" >> $GITHUB_ENV
+        
+        echo "✅ Android SDK setup completed!"
 
     - name: Verify SDK setup
       run: |
         echo "🔍 Verifikasi folder SDK:"
         ls -la /home/runner/.buildozer/android/platform/android-sdk/ || echo "❌ SDK tidak ada"
         ls -la /home/runner/.buildozer/android/platform/android-sdk/tools/bin/ || echo "❌ tools/bin tidak ada"
-        ls -la /home/runner/.buildozer/android/platform/android-sdk/build-tools/ || echo "❌ build-tools tidak ada"
+        ~/android-sdk/tools/bin/sdkmanager --version || echo "❌ sdkmanager error"
         echo "✅ ANDROID_HOME=$ANDROID_HOME"
 
     - name: Build with Buildozer
       run: |
-        export PATH=$PATH:~/.local/bin:/home/runner/.buildozer/android/platform/android-sdk/tools/bin
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+        export PATH=$PATH:~/.local/bin:~/android-sdk/tools/bin:~/android-sdk/platform-tools
+        export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
         export ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk
         export ANDROID_SDK_ROOT=/home/runner/.buildozer/android/platform/android-sdk
         
