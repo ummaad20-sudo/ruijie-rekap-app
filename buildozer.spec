@@ -1,52 +1,31 @@
-name: Build APK
+[app]
+title = Ruijie Rekap Pro
+package.name = ruijierekap
+package.domain = org.junai
+version = 0.1
+version.code = 1
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,txt
+requirements = python3,kivy==2.1.0,openpyxl
+orientation = portrait
+osx.python_version = 3
+osx.kivy_version = 2.1.0
+fullscreen = 0
+author = JUN.AI
+author_email = your@email.com
+description = Aplikasi Rekap Data Ruijie Pro
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+[buildozer]
+log_level = 2
+warn_on_root = 1
 
-jobs:
-  build:
-    runs-on: ubuntu-22.04  # PAKAI 22.04, BUKAN latest
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+[requirements]
+android.api = 30
+android.minapi = 21
+android.ndk = 23b
+android.sdk = 30
 
-    - name: Install system dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y \
-          git \
-          zip \
-          unzip \
-          openjdk-17-jdk \
-          python3-pip \
-          autoconf \
-          libtool \
-          pkg-config \
-          zlib1g-dev \
-          libncurses5-dev \
-          libncursesw5-dev \
-          libtinfo5 \
-          cmake \
-          libffi-dev \
-          libssl-dev
-
-    - name: Install Python dependencies
-      run: |
-        python3 -m pip install --upgrade pip
-        pip3 install --user buildozer cython  # PASTIKAN buildozer (bukan buildzorer)
-
-    - name: Build with Buildozer
-      run: |
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-        export PATH=$PATH:~/.local/bin
-        # Pastikan pake buildozer, bukan buildzorer
-        ~/.local/bin/buildozer -v android debug
-        
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: RuijieRekap-APK
-        path: bin/*.apk
+[android]
+permissions = READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE
+android.gradle_dependencies = androidx.core:core:1.7.0
+android.arch = arm64-v8a
