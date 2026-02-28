@@ -3,6 +3,8 @@ name: Build APK
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -32,56 +34,112 @@ jobs:
           libtinfo5 \
           cmake \
           libffi-dev \
-          libssl-dev
+          libssl-dev \
+          wget \
+          expect \
+          tree \
+          findutils
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
 
     - name: Install Python dependencies
       run: |
-        python3 -m pip install --upgrade pip
-        pip3 install --user buildozer cython
+        python -m pip install --upgrade pip
+        pip install --user buildozer cython
 
     - name: Accept Android SDK Licenses
       run: |
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
-        echo "✅ SDK licenses akan di-accept otomatis oleh buildozer"
+        # Auto-accept semua lisensi jika sdkmanager sudah ada
+        if [ -f "$HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager" ]; then
+          yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+        fi
+        echo "✅ SDK licenses setup completed"
 
     - name: Build with Buildozer
       run: |
         export PATH=$PATH:~/.local/bin
-        # Build APK
-        buildozer android debug
+        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         
-    - name: Find and Upload APK
+        # Build APK dengan retry mechanism
+        for i in {1..3}; do
+          echo "🚀 Build attempt $i of 3"
+          if buildozer -v android debug; then
+            echo "✅ Build successful on attempt $i"
+            break
+          else
+            echo "❌ Build failed on attempt $i"
+            if [ $i -eq 3 ]; then
+              echo "All build attempts failed"
+              exit 1
+            fi
+            echo "⏳ Waiting 30 seconds before retry..."
+            sleep 30
+          fi
+        done
+
+    - name: Find APK files
       if: always()
       run: |
-        echo "🔍 Mencari file APK yang dihasilkan..."
+        echo "🔍 Mencari file APK di semua lokasi..."
         
-        # Cari di semua lokasi umum
-        LOCATIONS=(
-          "./bin/*.apk"
-          "~/.buildozer/android/platform/build-*/dists/*/bin/*.apk"
-          "~/.local/share/buildozer/android/platform/build-*/dists/*/bin/*.apk"
-          "**/*.apk"
-        )
+        # Buat folder untuk menyimpan APK
+        mkdir -p apk-artifacts
         
-        for pattern in "${LOCATIONS[@]}"; do
-          echo "Mencari: $pattern"
-          find ~ -name "*.apk" -type f 2>/dev/null | while read apk; do
-            echo "✅ APK ditemukan: $apk"
-            cp "$apk" ./ || true
-          done
+        # Cari semua file .apk di seluruh sistem
+        find /home/runner -name "*.apk" -type f 2>/dev/null | while read apk; do
+          echo "✅ APK ditemukan: $apk"
+          ls -la "$apk"
+          # Copy ke folder artifacts dengan nama unik
+          cp "$apk" apk-artifacts/ || true
+        done
+        
+        # Cari juga di folder proyek
+        find $GITHUB_WORKSPACE -name "*.apk" -type f 2>/dev/null | while read apk; do
+          echo "✅ APK ditemukan di workspace: $apk"
+          ls -la "$apk"
+          cp "$apk" apk-artifacts/ || true
         done
         
         # Tampilkan semua APK yang ditemukan
-        echo "📋 Daftar APK:"
-        ls -la *.apk 2>/dev/null || echo "Tidak ada APK di folder saat ini"
+        echo "📋 Daftar APK yang siap diupload:"
+        ls -la apk-artifacts/ || echo "Tidak ada APK ditemukan"
         
+        # Informasi tambahan untuk debugging
+        echo "📁 Struktur folder buildozer:"
+        ls -la ~/.buildozer/ || echo "Folder .buildozer tidak ditemukan"
+        ls -la ~/.buildozer/android/platform/ || echo "Folder platform tidak ditemukan"
+        ls -la ~/.buildozer/android/platform/build-*/ || echo "Folder build tidak ditemukan"
+        ls -la ~/.buildozer/android/platform/build-*/dists/ || echo "Folder dists tidak ditemukan"
+        ls -la ~/.buildozer/android/platform/build-*/dists/*/bin/ || echo "Folder bin tidak ditemukan"
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: RuijieRekap-APK
         path: |
-          *.apk
+          apk-artifacts/*.apk
           bin/*.apk
           **/*.apk
+          *.apk
+        if-no-files-found: warn
+        compression-level: 6
+        overwrite: true
       if: always()
+
+    - name: Debug information
+      if: failure()
+      run: |
+        echo "❌ Build failed. Collecting debug information..."
+        echo "Current directory:"
+        pwd
+        echo "Directory contents:"
+        ls -la
+        echo "Buildozer logs:"
+        cat ~/.buildozer/buildozer.log 2>/dev/null || echo "No buildozer log"
+        echo "Python packages:"
+        pip list
