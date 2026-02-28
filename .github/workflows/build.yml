@@ -32,9 +32,7 @@ jobs:
           libtinfo5 \
           cmake \
           libffi-dev \
-          libssl-dev \
-          wget \
-          expect
+          libssl-dev
 
     - name: Install Python dependencies
       run: |
@@ -45,21 +43,45 @@ jobs:
       run: |
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
-        # Auto-accept semua lisensi
-        yes | $HOME/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses > /dev/null 2>&1 || true
+        echo "✅ SDK licenses akan di-accept otomatis oleh buildozer"
 
     - name: Build with Buildozer
       run: |
         export PATH=$PATH:~/.local/bin
-        # Retry mechanism jika gagal download
-        for i in {1..3}; do
-          echo "Attempt $i of 3"
-          buildozer -v android debug && break || sleep 30
+        # Build APK
+        buildozer android debug
+        
+    - name: Find and Upload APK
+      if: always()
+      run: |
+        echo "🔍 Mencari file APK yang dihasilkan..."
+        
+        # Cari di semua lokasi umum
+        LOCATIONS=(
+          "./bin/*.apk"
+          "~/.buildozer/android/platform/build-*/dists/*/bin/*.apk"
+          "~/.local/share/buildozer/android/platform/build-*/dists/*/bin/*.apk"
+          "**/*.apk"
+        )
+        
+        for pattern in "${LOCATIONS[@]}"; do
+          echo "Mencari: $pattern"
+          find ~ -name "*.apk" -type f 2>/dev/null | while read apk; do
+            echo "✅ APK ditemukan: $apk"
+            cp "$apk" ./ || true
+          done
         done
+        
+        # Tampilkan semua APK yang ditemukan
+        echo "📋 Daftar APK:"
+        ls -la *.apk 2>/dev/null || echo "Tidak ada APK di folder saat ini"
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: RuijieRekap-APK
-        path: bin/*.apk
+        path: |
+          *.apk
+          bin/*.apk
+          **/*.apk
       if: always()
