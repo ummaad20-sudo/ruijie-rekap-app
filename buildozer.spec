@@ -35,4 +35,4 @@ android.arch = arm64-v8a
 [app]
 author = JUN.AI
 author_email = your@email.com
-description = Aplikasi Rekap Data Ruijie Pro
+description = Rekapan Voucher Penjualan
