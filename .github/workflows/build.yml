@@ -52,8 +52,8 @@ jobs:
         mkdir -p ~/.android
         touch ~/.android/repositories.cfg
         
-        # 🚨 PAKAI SDK TOOLS VERSI LAMA (26.1.1) YANG TERBUKTI STABIL
-        echo "📦 Installing Android SDK (stable version)..."
+        # PAKAI SDK TOOLS VERSI LAMA (26.1.1) YANG TERBUKTI STABIL
+        echo "Installing Android SDK (stable version)..."
         cd ~
         wget -q https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
         unzip -q sdk-tools-linux-4333796.zip -d android-sdk
@@ -63,7 +63,7 @@ jobs:
         export PATH=$PATH:~/android-sdk/tools/bin:~/android-sdk/platform-tools
         
         # Accept semua lisensi
-        echo "✅ Accepting all Android SDK licenses..."
+        echo "Accepting all Android SDK licenses..."
         yes | ~/android-sdk/tools/bin/sdkmanager --licenses || true
         
         # Install platform tools
@@ -75,7 +75,7 @@ jobs:
         # Install NDK
         ~/android-sdk/tools/bin/sdkmanager "ndk;23.1.7779620" || true
         
-        # 🚨 BUAT FOLDER UNTUK BUILDOZER
+        # BUAT FOLDER UNTUK BUILDOZER
         mkdir -p /home/runner/.buildozer/android/platform
         
         # COPY SDK ke folder buildozer
@@ -89,15 +89,15 @@ jobs:
         echo "ANDROID_SDK_ROOT=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
         echo "PATH=$PATH:~/android-sdk/tools/bin:~/android-sdk/platform-tools" >> $GITHUB_ENV
         
-        echo "✅ Android SDK setup completed!"
+        echo "Android SDK setup completed!"
 
     - name: Verify SDK setup
       run: |
         echo "🔍 Verifikasi folder SDK:"
-        ls -la /home/runner/.buildozer/android/platform/android-sdk/ || echo "❌ SDK tidak ada"
-        ls -la /home/runner/.buildozer/android/platform/android-sdk/tools/bin/ || echo "❌ tools/bin tidak ada"
-        ~/android-sdk/tools/bin/sdkmanager --version || echo "❌ sdkmanager error"
-        echo "✅ ANDROID_HOME=$ANDROID_HOME"
+        ls -la /home/runner/.buildozer/android/platform/android-sdk/ || echo "SDK tidak ada"
+        ls -la /home/runner/.buildozer/android/platform/android-sdk/tools/bin/ || echo "tools/bin tidak ada"
+        ~/android-sdk/tools/bin/sdkmanager --version || echo "sdkmanager error"
+        echo "ANDROID_HOME=$ANDROID_HOME"
 
     - name: Build with Buildozer
       run: |
@@ -117,16 +117,16 @@ jobs:
         
         # Cari semua file .apk
         find ~ -name "*.apk" -type f 2>/dev/null | while read apk; do
-          echo "✅ APK ditemukan: $apk"
+          echo "APK ditemukan: $apk"
           cp "$apk" apk-artifacts/ 2>/dev/null || true
         done
         
         find $GITHUB_WORKSPACE -name "*.apk" -type f 2>/dev/null | while read apk; do
-          echo "✅ APK ditemukan di workspace: $apk"
+          echo "APK ditemukan di workspace: $apk"
           cp "$apk" apk-artifacts/ 2>/dev/null || true
         done
         
-        echo "📋 Daftar APK:"
+        echo "Daftar APK:"
         ls -la apk-artifacts/ || echo "Tidak ada APK"
         
     - name: Upload APK
