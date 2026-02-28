@@ -31,10 +31,6 @@ android.gradle_dependencies = androidx.core:core:1.7.0
 android.arch = arm64-v8a
 android.accept_sdk_license = True
 android.build_tools_version = 30.0.0
-
-# Path ke Android SDK
 android.sdk_path = /home/runner/.buildozer/android/platform/android-sdk
 android.ndk_path = /home/runner/.buildozer/android/platform/android-ndk-r23b
-
-# MATIKAN auto-update SDK
 android.auto_sdk = False
