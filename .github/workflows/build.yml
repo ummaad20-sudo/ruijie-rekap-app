@@ -3,8 +3,6 @@ name: Build APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -12,13 +10,7 @@ jobs:
     runs-on: ubuntu-22.04
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+    - uses: actions/checkout@v4
 
     - name: Install system dependencies
       run: |
@@ -44,35 +36,18 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install --user buildozer cython
-
-    - name: Setup Android SDK and accept licenses
-      run: |
-        # Setup Android directory
-        mkdir -p ~/.android
-        touch ~/.android/repositories.cfg
-        
-        # Download and setup SDK manager if not exists
-        if [ ! -d "$HOME/.buildozer/android/platform/android-sdk" ]; then
-          echo "SDK not found, will be downloaded by buildozer"
-        else
-          # Accept all SDK licenses
-          yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses > /dev/null 2>&1 || true
-        fi
-        
-        echo "Android SDK setup completed"
+        pip3 install --user --upgrade pip
+        pip3 install --user buildozer cython
 
     - name: Build with Buildozer
       run: |
-        export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         export PATH=$PATH:~/.local/bin
-        
-        # Auto-accept semua prompt dengan 'yes'
-        yes | buildozer -v android debug
-        
+        # Hapus 'yes |' karena bisa menyebabkan broken pipe
+        buildozer -v android debug || true
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: RuijieRekap-APK
         path: bin/*.apk
+      if: always()
