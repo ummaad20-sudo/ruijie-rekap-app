@@ -22,7 +22,6 @@ class RekapApp(App):
             return "Rp 0"
 
     def build(self):
-
         root = BoxLayout(orientation='vertical', padding=15, spacing=10)
 
         with root.canvas.before:
@@ -120,7 +119,6 @@ class RekapApp(App):
         popup.open()
 
     def proses_file(self, selection, popup):
-
         if not selection:
             return
 
@@ -148,13 +146,11 @@ class RekapApp(App):
             return
 
         for row in sheet.iter_rows(min_row=2, values_only=True):
-
             grup = row[kolom_grup]
             harga = row[kolom_harga]
             tanggal_full = row[kolom_tanggal]
 
             if grup and harga and tanggal_full:
-
                 if isinstance(tanggal_full, datetime):
                     tanggal = tanggal_full.strftime("%Y/%m/%d")
                 else:
@@ -174,7 +170,6 @@ class RekapApp(App):
         tanggal_terakhir = None
 
         for (tanggal, grup), data in sorted(rekap_detail.items()):
-
             if tanggal_terakhir and tanggal != tanggal_terakhir:
                 hasil += f"[color=00ffcc][b]TOTAL {self.format_rupiah(rekap_tanggal[tanggal_terakhir])}[/b][/color]\n"
                 hasil += "-" * 40 + "\n\n"
