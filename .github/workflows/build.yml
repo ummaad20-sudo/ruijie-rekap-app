@@ -3,22 +3,15 @@ name: Build APK
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04  # PAKAI 22.04, BUKAN latest
     
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.8'
 
     - name: Install system dependencies
       run: |
@@ -42,14 +35,15 @@ jobs:
 
     - name: Install Python dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install --user buildozer cython
+        python3 -m pip install --upgrade pip
+        pip3 install --user buildozer cython  # PASTIKAN buildozer (bukan buildzorer)
 
     - name: Build with Buildozer
       run: |
         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
         export PATH=$PATH:~/.local/bin
-        yes | buildozer -v android debug
+        # Pastikan pake buildozer, bukan buildzorer
+        ~/.local/bin/buildozer -v android debug
         
     - name: Upload APK
       uses: actions/upload-artifact@v4
